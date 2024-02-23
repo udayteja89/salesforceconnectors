@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="d6d6b905-cbc5-45d2-b7e0-66595ead4787" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="d2d7b88f-88a9-45e4-b0a3-d25fe5289719" >
+		<salesforce:basic-connection username="udayteja89@salesforce.com" password="Winterzz32@@" securityToken="Ufi1u3wNHkRBnV6dV0HJEDbAX" url="https://login.salesforce.com/services/Soap/u/55" />
+	</salesforce:sfdc-config>
+	<flow name="salesforce-connectorFlow" doc:id="f73b858c-d0a8-4bf6-8875-fbc509401f11" >
+		<http:listener doc:name="Listener" doc:id="805a0ad9-83b5-4ae4-84e7-63844703826d" config-ref="HTTP_Listener_config" path="/sfmule"/>
+		<ee:transform doc:name="Transform Message" doc:id="91f091a4-900b-4ff1-ac4b-a696d35516a7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:create doc:name="Create" doc:id="18102e76-319c-467f-9913-ff83e624c285" config-ref="Salesforce_Config" type="Account"/>
+		<ee:transform doc:name="Transform Message" doc:id="56428528-fc44-48f2-a7ff-7f9a601b0fc0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="salesforce-OnNewObject" doc:id="c887ff83-dece-49d3-89f9-b9a113ef0460" >
+		<salesforce:new-object-listener objectType="Account" doc:name="On New Object" doc:id="5037d42b-cbfc-413c-ad3c-83887c03b293" config-ref="Salesforce_Config">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</salesforce:new-object-listener>
+		<ee:transform doc:name="Transform Message" doc:id="8062acc4-19b1-44d4-bc47-613aa09f0656" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="PrintingAccountInfo" doc:id="19da8a33-e06b-408f-ac74-b2a336299388" message="#[payload]"/>
+	</flow>
+	<flow name="salesforce-OnModifyObject" doc:id="e691d19a-d637-44df-8a6f-bccca0cd0878" >
+		<salesforce:modified-object-listener objectType="Lead" doc:name="On Modified Object" doc:id="fcae3cd3-5cf1-49cd-93eb-823a9239742f" config-ref="Salesforce_Config">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</salesforce:modified-object-listener>
+		<ee:transform doc:name="Transform Message" doc:id="a569b0b9-f44a-463b-b81b-8ca8a73bb9e3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="369b827d-3c8c-40b2-9a00-7d4b1624bc7f" message="#[payload]"/>
+	</flow>
+</mule>
